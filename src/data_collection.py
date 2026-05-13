@@ -254,7 +254,7 @@ def build_dataset(
 
 if __name__ == "__main__":
     df = build_dataset(
-        start_year=1980,
+        start_year=1960,
         end_year=2022,
-        output_path=Path("economic_shock_dataset_raw.csv"),
+        output_path=Path(__file__).parent.parent / "data" / "economic_shock_dataset_raw.csv"
     )
