@@ -5,16 +5,20 @@ EconomicShockDetector/
 │
 ├── src/
 │   ├── data_collection.py      ← fetches raw data from World Bank API
-│   ├── requirements.txt        ← dependencies of the project
-│   └── build_dataset.py        ← cleans data and creates the final dataset
+│   ├── build-dataset.py          ← cleans data and creates the final dataset
+│   └── requirements.txt        ← dependencies of the project
 │
 ├── data/
 │   ├── economic_shock_dataset_raw.csv   ← raw output from data_collection.py
 │   ├── dataset.csv                      ← final clean labeled dataset
 │   └── sample.csv                       ← first 100 rows for quick review
 │
-├── cadrage.md                  ← project framing (business objectives, metrics)
-└── README.md                   
+├── notebooks/
+│   └── 01_discovery.ipynb        ← EDA on dataset.csv (Person C)
+│
+├── DATASET.md                    ← dataset documentation (Person C)
+├── cadrage.md                    ← project framing (business objectives, metrics)
+└── README.md
 ```
 
 ---
@@ -23,8 +27,9 @@ EconomicShockDetector/
 
 ### Step 1 — Install dependencies
 ```bash
-pip install -r requirements.txt
+pip install -r src/requirements.txt
 ```
+(From the **project root**. If your shell is already inside `src/`, use `pip install -r requirements.txt` instead.)
 
 ### Step 2 — Collect raw data from the World Bank API
 ```bash
@@ -37,7 +42,7 @@ Output: `data/economic_shock_dataset_raw.csv`
 
 ### Step 3 — Build the final clean dataset
 ```bash
-python build_dataset.py
+python build-dataset.py
 ```
 This cleans the raw data, applies the shock labeling rule, and saves the final files.  
 Output: `data/dataset.csv` and `data/sample.csv`
@@ -63,6 +68,7 @@ One row = one country in one year.
 | `inflation` | number | Consumer price inflation % |
 | `unemployment` | number | Unemployment % of labour force |
 | `gdp_per_capita` | number | GDP per capita in constant USD |
+| `external_debt_pct` | number | External debt as % of GNI |
 | `trade_openness` | number | Trade as % of GDP |
 | `fdi_inflows` | number | Foreign direct investment as % of GDP |
 | `gov_expenditure` | number | Government expenditure as % of GDP |
@@ -84,7 +90,7 @@ One row = one country in one year.
 
 ## Cleaning Decisions
 
-During `build_dataset.py` we drop rows in this order and for these reasons:
+During `build-dataset.py` we drop rows in this order and for these reasons:
 
 | What we drop | Why |
 |---|---|
