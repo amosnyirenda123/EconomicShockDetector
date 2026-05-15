@@ -9,7 +9,7 @@ This document describes the analysis-ready dataset produced for the supervised l
 
 | Stage                 | Artifact                                                           | Responsibility                                                   |
 | --------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------- |
-| Collection            | Raw wide table from the World Bank (indicators + country metadata) | `src/data_collection.py` → `data/economic_shock_dataset_raw.csv` |
+| Collection            | Raw wide table from the World Bank (indicators + country metadata) | `src/data_collection.py` → `data/gdp_shock_dataset_raw.csv` |
 | Processing & labeling | Cleaning, shock label, constraint checks, exports                  | `src/build-dataset.py` → `data/dataset.csv`, `data/sample.csv`   |
 
 
@@ -41,19 +41,19 @@ Each row is **one economy (country) in one calendar year**:
 
 ---
 
-## 4. Target variable: `economic_shock`
+## 4. Target variable: `gdp_shock`
 
 **Type:** binary integer **0** or **1**.
 
 **Labeling rule** (exact logic in `src/build-dataset.py`; definition from `[cadrage.md](cadrage.md)` section4):
 
-`economic_shock = 1` **only if all** of the following hold for that country-year:
+`gdp_shock = 1` **only if all** of the following hold for that country-year:
 
 1. **`gdp_growth` < 0** — annual real GDP growth is negative (contraction).
 2. **`gdp_growth_delta` < −4** — growth fell by **more than 4 percentage points** versus the previous year.
 3. **`gdp_growth_lag1` > 0** — the previous year’s growth was positive (the shock is **sudden**, not a continuation of an ongoing recession).
 
-Otherwise **`economic_shock = 0`**.
+Otherwise **`gdp_shock = 0`**.
 
 **Class balance (project requirement):** minority class (label **1**) should represent **between 5% and 25%** of rows (`cadrage.md` section10). The build script prints `value_counts` and `value_counts(normalize=True)` so you can verify this on the full `dataset.csv`.
 
@@ -142,18 +142,18 @@ Types below are logical types for modeling; CSV stores numbers and text as plain
 
 | Column           | Type           | Description                          |
 | ---------------- | -------------- | ------------------------------------ |
-| `economic_shock` | integer {0, 1} | **Supervised label** — see section4. |
+| `gdp_shock` | integer {0, 1} | **Supervised label** — see section4. |
 
 
 ---
 
 ## 7. Features vs target (for modeling)
 
-For **supervised classification**, the **target** is `economic_shock`.
+For **supervised classification**, the **target** is `gdp_shock`.
 
 **Identifiers** (usually excluded from feature matrix or used only for grouping): `country`, `country_name`, `year`.
 
-**Candidate input features** include all remaining columns except `economic_shock`. The project requires **at least 8** features after any feature selection (`cadrage.md` section10); this file provides **many** numeric and categorical columns so the team can choose a modeling subset while staying above the minimum.
+**Candidate input features** include all remaining columns except `gdp_shock`. The project requires **at least 8** features after any feature selection (`cadrage.md` section10); this file provides **many** numeric and categorical columns so the team can choose a modeling subset while staying above the minimum.
 
 ---
 
@@ -169,7 +169,7 @@ python build-dataset.py
 
 Outputs:
 
-- `data/economic_shock_dataset_raw.csv` merged raw panel from the API.  
+- `data/gdp_shock_dataset_raw.csv` merged raw panel from the API.  
 - `data/dataset.csv` cleaned, labeled dataset used for EDA and modeling.  
 - `data/sample.csv` first 100 rows of `dataset.csv` for quick inspection.
 

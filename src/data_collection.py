@@ -5,7 +5,7 @@ Aligned with: Fiche de Cadrage — Projet Machine Learning
               Détecteur de Chocs Économiques — World Bank API
 
 This script only collects and saves raw data.
-Target variable (economic_shock) will be computed in a later step.
+Target variable (gdp_shock) will be computed in a later step.
 
 Features collected:
     - 8 core indicators  (cadrage §9)
@@ -217,7 +217,7 @@ def chunked(iterable, size):
 def build_dataset(
     start_year:  int  = 1960,
     end_year:    int  = 2022,
-    output_path: Path = Path("economic_shock_dataset_raw.csv"),
+    output_path: Path = Path("gdp_shock_dataset_raw.csv"),
 ) -> pd.DataFrame:
     """
     Pipeline:
@@ -256,5 +256,5 @@ if __name__ == "__main__":
     df = build_dataset(
         start_year=1960,
         end_year=2022,
-        output_path=Path(__file__).parent.parent / "data" / "economic_shock_dataset_raw.csv"
+        output_path=Path(__file__).parent.parent / "data" / "gdp_shock_dataset_raw.csv"
     )

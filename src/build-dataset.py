@@ -19,7 +19,7 @@ from pathlib import Path
 # -----------------------------------------------------------------------
 # Paths
 # -----------------------------------------------------------------------
-RAW_PATH     = Path(__file__).parent.parent / "data" / "economic_shock_dataset_raw.csv"
+RAW_PATH     = Path(__file__).parent.parent / "data" / "gdp_shock_dataset_raw.csv"
 DATASET_PATH = Path(__file__).parent.parent / "data" / "dataset.csv"
 SAMPLE_PATH  = Path(__file__).parent.parent / "data" / "sample.csv"
 
@@ -53,12 +53,12 @@ print(f"After dropping missing lag1:         {len(df):,} rows  (dropped {before 
 # -----------------------------------------------------------------------
 # Step 4 — Apply target variable rule (cadrage section 4)
 #
-# economic_shock = 1 if ALL of:
+# gdp_shock = 1 if ALL of:
 #   - gdp_growth < 0          (economy actually contracted)
 #   - gdp_growth_delta < -4   (dropped more than 4 percentage points vs prior year)
 #   - gdp_growth_lag1 > 0     (prior year was positive — shock is sudden not ongoing)
 # -----------------------------------------------------------------------
-df["economic_shock"] = (
+df["gdp_shock"] = (
     (df["gdp_growth"]       <  0) &
     (df["gdp_growth_delta"] < -4) &
     (df["gdp_growth_lag1"]  >  0)
@@ -70,15 +70,15 @@ df["economic_shock"] = (
 print("\n--- Constraint Verification ---")
 
 total_rows = len(df)
-minority   = df["economic_shock"].sum()
+minority   = df["gdp_shock"].sum()
 minority_pct = minority / total_rows * 100
 
 print(f"Total rows:         {total_rows:,}  (required: ≥ 10,000)")
 print(f"Total columns:      {df.shape[1]}  (required: ≥ 8)")
 print(f"Minority class:     {minority:,} rows = {minority_pct:.1f}%  (required: 5–25%)")
 print(f"\nClass distribution:")
-print(df["economic_shock"].value_counts())
-print(df["economic_shock"].value_counts(normalize=True).round(3))
+print(df["gdp_shock"].value_counts())
+print(df["gdp_shock"].value_counts(normalize=True).round(3))
 
 # Warn if constraints are not met
 if total_rows < 10_000:

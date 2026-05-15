@@ -9,7 +9,7 @@ EconomicShockDetector/
 │   └── requirements.txt        ← dependencies of the project
 │
 ├── data/
-│   ├── economic_shock_dataset_raw.csv   ← raw output from data_collection.py
+│   ├── gdp_shock_dataset_raw.csv         ← raw output from data_collection.py
 │   ├── dataset.csv                      ← final clean labeled dataset
 │   └── sample.csv                       ← first 100 rows for quick review
 │
@@ -38,7 +38,7 @@ python data_collection.py
 ```
 This makes ~14 API calls to the World Bank.  
 It takes about 5 to 15 minutes depending on your connection.  
-Output: `data/economic_shock_dataset_raw.csv`
+Output: `data/gdp_shock_dataset_raw.csv`
 
 ### Step 3 — Build the final clean dataset
 ```bash
@@ -84,7 +84,7 @@ One row = one country in one year.
 | `is_crisis_decade` | category | Decade bucket (1980s, 1990s, 2000s...) |
 | `gdp_growth_lag1` | number | GDP growth of the previous year |
 | `gdp_growth_delta` | number | Change in GDP growth vs previous year (in percentage points) |
-| `economic_shock` | **0 or 1** | **Target variable — what we are predicting** |
+| `gdp_shock` | **0 or 1** | **Target variable — what we are predicting** |
 
 ---
 

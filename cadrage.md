@@ -42,7 +42,7 @@
 
 ## 4. Définition de la variable cible
 
-**Nom de la variable :** `economic_shock`  
+**Nom de la variable :** `gdp_shock`  
 **Type :** Binaire (0 ou 1)
 
 **Règle d'étiquetage exacte :**
