@@ -36,7 +36,7 @@ EconomicShockDetector/
 
 - Phase 1: COMPLETE
 - Phase 2: COMPLETE
-- Phase 3: IN PROGRESS
+- Phase 3: IN PROGRESS (notebooks created, ready to run)
 - Phase 4: NOT STARTED
 
 ## Reproduce Phase 2
@@ -90,6 +90,13 @@ Full details are documented in `preprocessing_decisions.md`.
 - Used train-only median imputation grouped by `income_group`.
 - Encoded nominal categorical variables with one-hot encoding and `is_crisis_decade` with ordinal encoding.
 - Prepared train/validation/test splits with stratification on `gdp_shock`.
+
+## Phase 3 Deliverables
+
+- `notebooks/04_modeling.ipynb` — 4 models × 3 imbalance strategies (12 configurations), comparative table
+- `notebooks/05_tuning.ipynb` — RandomizedSearchCV on the best combination, hyperparameter justification
+- `notebooks/06_evaluation.ipynb` — Final test evaluation, ROC/PR curves, threshold optimization, final model export
+- `models/final_model.joblib` — Complete pipeline + optimal threshold as metadata (produced by notebook 06)
 
 ## Phase 3 Handoff
 
