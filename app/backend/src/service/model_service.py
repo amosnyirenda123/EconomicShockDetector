@@ -10,7 +10,6 @@ import pandas as pd
 
 from fastapi import HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
-
 from core.config import settings
 from schemas.schemas import PredictRequest, PredictResponse
 
@@ -29,8 +28,8 @@ def _confidence_label(prob: float, threshold: float) -> str:
 class ModelService:
     """Loaded ONCE at application startup. Repository is injected per-request."""
 
-    def __init__(self):
-        self.repository = None  # injected by dependency factory
+    def __init__(self,):
+        self.repository = None 
         self._payload: dict = {}
         self._loaded = False
 

@@ -2,16 +2,26 @@ import hashlib
 import logging
 
 from fastapi import HTTPException
-
 from repository.user_repo import UserRepository
 from schemas.schemas import RegisterReq, LoginReq, UserOut, ChatHistoryOut
+import bcrypt
 
 logger = logging.getLogger(__name__)
 
 
 def _hash_password(password: str) -> str:
-    """Simple SHA-256 hash. Replace with bcrypt in production."""
-    return hashlib.sha256(password.encode()).hexdigest()
+    hashed = bcrypt.hashpw(
+        password.encode("utf-8"),
+        bcrypt.gensalt()
+    )
+    return hashed.decode("utf-8")
+
+
+def _verify_password(password: str, hashed_password: str) -> bool:
+    return bcrypt.checkpw(
+        password.encode("utf-8"),
+        hashed_password.encode("utf-8")
+    )
 
 
 class UserService:
@@ -35,8 +45,12 @@ class UserService:
 
     def login(self, req: LoginReq) -> UserOut:
         user = self.repository.get_by_email(req.email)
-        if not user or user.password != _hash_password(req.password):
-            raise HTTPException(status_code=401, detail="Invalid email or password")
+
+        if not user or not _verify_password(req.password, user.password):
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid email or password"
+            )
         return UserOut.model_validate(user)
 
     def get_chat_histories(self, user_id: int) -> list[ChatHistoryOut]:

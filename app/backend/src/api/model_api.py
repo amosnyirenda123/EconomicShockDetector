@@ -2,7 +2,7 @@ import logging
 
 from fastapi import APIRouter, Depends, UploadFile, File
 
-from dependencies import get_model_service
+from dependencies.dependencies import get_model_service
 from schemas.schemas import PredictRequest, PredictResponse
 from service.model_service import ModelService
 

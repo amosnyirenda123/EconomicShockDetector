@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from dependencies import get_user_service
+from dependencies.dependencies import get_user_service
 from schemas.schemas import RegisterReq, LoginReq, UserOut, ChatHistoryOut
 from service.user_service import UserService
 

@@ -7,6 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from service.model_service import _model_service_instance
 from api import model_api, user_api
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,
