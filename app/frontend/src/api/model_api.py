@@ -1,11 +1,23 @@
+import io
+
 import requests
 import streamlit as st
 from typing import Dict, Any, Optional
-from types.types import PredictRequest, PredictResponse
+from prediction_types import PredictRequest, PredictResponse
 
 class ModelAPI:
     def __init__(self, base_url: str):
         self.base_url = base_url
+
+
+    def get_index(self) -> Optional[dict]:
+        try:
+            response = requests.get(f"{self.base_url}/")
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            st.error(f"Could not reach API: {str(e)}")
+            return None
     
     def get_health(self) -> Dict[str, Any]:
         """Check model API health"""
@@ -40,19 +52,17 @@ class ModelAPI:
             st.error(f"Prediction failed: {str(e)}")
             return None
     
-    def predict_batch(self, file) -> Optional[bytes]:
-        """Make batch predictions from CSV"""
+    def predict_batch(self, file_bytes: bytes, filename: str) -> Optional[bytes]:
         try:
-            files = {"file": file}
             response = requests.post(
                 f"{self.base_url}/predict/batch",
-                files=files
+                files={"file": (filename, file_bytes, "text/csv")}
             )
             response.raise_for_status()
-            return response.content
+            return io.BytesIO(response.content)  # return BytesIO so pd.read_csv works directly
         except requests.exceptions.RequestException as e:
             st.error(f"Batch prediction failed: {str(e)}")
             return None
 
 
-model_api = ModelAPI("http://localhost:8000/api/v1")  
+model_api = ModelAPI("http://localhost:8000")  

@@ -1,8 +1,7 @@
 import io
-import json
 import logging
 from pathlib import Path
-from datetime import datetime
+
 
 import joblib
 import numpy as np
@@ -31,6 +30,7 @@ class ModelService:
     def __init__(self,):
         self.repository = None 
         self._payload: dict = {}
+        self._preprocessor = None
         self._loaded = False
 
     
@@ -38,15 +38,23 @@ class ModelService:
     def load(self):
         """Call once at startup (lifespan)."""
         model_path = Path(settings.model_path)
+        preprocessor_path = Path(settings.preprocessor_path)
+
         if not model_path.exists():
             logger.warning(f"Model file not found at {model_path}. Health will report degraded.")
             return
+        
+        if not preprocessor_path.exists():
+            logger.warning(f"Preprocessor file not found at {preprocessor_path}.")
+            return
         try:
             self._payload = joblib.load(model_path)
+            self._preprocessor = joblib.load(preprocessor_path)
             self._loaded = True
             logger.info(f"Model loaded from {model_path}")
+            logger.info(f"Preprocessor loaded from {preprocessor_path}")
         except Exception as exc:
-            logger.error(f"Failed to load model: {exc}")
+            logger.error(f"Failed to load model/preprocessor: {exc}")
 
     @property
     def pipeline(self):
@@ -59,6 +67,18 @@ class ModelService:
     @property
     def feature_names(self) -> list[str]:
         return self._payload.get("feature_names", [])
+    
+
+    def _preprocess(self, df: pd.DataFrame) -> np.ndarray:
+        """
+        Apply the saved preprocessing pipeline (imputation + encoding + scaling)
+        to raw input features before passing to the model.
+        The preprocessor was fit on train.csv in notebook 03_preprocessing.
+        """
+        # feature_names from the model payload are the POST-processed column names
+        # (e.g. nominal_categorical__region_...). We pass raw features to the
+        # preprocessor which expects the original column names.
+        return self._preprocessor.transform(df)
 
     
 
@@ -77,7 +97,7 @@ class ModelService:
     def health(self) -> dict:
         if not self._loaded:
             raise HTTPException(status_code=503, detail="Model not loaded")
-        return {"status": "ok", "model_loaded": True}
+        return {"status": "healthy", "model_loaded": True}
 
     def info(self) -> dict:
         if not self._loaded:
@@ -95,14 +115,20 @@ class ModelService:
     def predict(self, request: PredictRequest) -> PredictResponse:
         if not self._loaded:
             raise HTTPException(status_code=503, detail="Model not loaded")
-
-        df = pd.DataFrame([request.model_dump()])
+ 
+        # Build raw DataFrame matching the original (pre-preprocessing) feature space
+        raw_df = pd.DataFrame([request.model_dump()])
+ 
+        # Derive engineered features the preprocessor expects
+        raw_df = _add_engineered_features(raw_df)
+ 
         try:
-            prob = float(self.pipeline.predict_proba(df)[:, 1][0])
+            X = self._preprocess(raw_df)
+            prob = float(self.pipeline.predict_proba(X)[:, 1][0])
         except Exception as exc:
             logger.error(f"Prediction error: {exc}")
             raise HTTPException(status_code=500, detail=f"Prediction failed: {exc}")
-
+ 
         prediction = "choc" if prob >= self.threshold else "normal"
         return PredictResponse(
             prediction=prediction,
@@ -114,44 +140,55 @@ class ModelService:
     async def batch_predict(self, file: UploadFile) -> StreamingResponse:
         if not self._loaded:
             raise HTTPException(status_code=503, detail="Model not loaded")
-
+ 
         if not file.filename.endswith(".csv"):
             raise HTTPException(status_code=400, detail="Only CSV files are accepted")
-
+ 
         try:
             contents = await file.read()
             df = pd.read_csv(io.BytesIO(contents))
         except Exception as exc:
             raise HTTPException(status_code=400, detail=f"Could not parse CSV: {exc}")
-
-        # Validate required columns
-        missing = [c for c in self.feature_names if c not in df.columns]
-        if missing:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Missing columns in CSV: {missing}"
-            )
-
+ 
+        df = _add_engineered_features(df)
+ 
         try:
-            probs = self.pipeline.predict_proba(df[self.feature_names])[:, 1]
+            X = self._preprocess(df)
+            probs = self.pipeline.predict_proba(X)[:, 1]
         except Exception as exc:
             logger.error(f"Batch prediction error: {exc}")
             raise HTTPException(status_code=500, detail=f"Batch prediction failed: {exc}")
-
+ 
         df["probability"] = np.round(probs, 4)
         df["prediction"] = np.where(probs >= self.threshold, "choc", "normal")
         df["threshold"] = self.threshold
         df["confidence"] = [_confidence_label(p, self.threshold) for p in probs]
-
+ 
         output = io.StringIO()
         df.to_csv(output, index=False)
         output.seek(0)
-
+ 
         return StreamingResponse(
             iter([output.getvalue()]),
             media_type="text/csv",
             headers={"Content-Disposition": "attachment; filename=predictions.csv"},
         )
+
+
+# Add Engineered Features
+def _add_engineered_features(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Reproduce the feature engineering from notebook 03_preprocessing section 4.
+    Must be applied to raw input before passing to the preprocessor.
+    """
+    df = df.copy()
+    if "gdp_per_capita" in df.columns:
+        df["gdp_per_capita_log"] = np.log(df["gdp_per_capita"])
+    if "external_debt_pct" in df.columns:
+        df["high_external_debt"] = (df["external_debt_pct"] > 80).fillna(False).astype(int)
+    else:
+        df["high_external_debt"] = 0
+    return df
 
 
 # Singleton — loaded once at startup

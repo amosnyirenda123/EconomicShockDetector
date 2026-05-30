@@ -5,7 +5,7 @@ def apply_custom_styles():
     st.markdown("""
         <style>
         .main-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: transparent;
             padding: 2rem;
             border-radius: 10px;
             margin-bottom: 2rem;

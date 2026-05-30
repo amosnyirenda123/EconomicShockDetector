@@ -18,6 +18,10 @@ def render_sidebar():
         if st.button("Batch Prediction", use_container_width=True):
             st.session_state.current_page = "batch_prediction"
             st.rerun()
+
+        if st.button("Developer's Guide", use_container_width=True):
+            st.session_state.current_page = "developer"
+            st.rerun()
         
         st.markdown("---")
         

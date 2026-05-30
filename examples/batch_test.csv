@@ -1,0 +1,11 @@
+gdp_per_capita,gov_expenditure,debt_service_pct,external_debt_pct,gni_per_capita_growth,unemployment,fx_reserves_months,current_account_pct,trade_openness,inflation,fdi_inflows,region,income_group,lending_type,is_crisis_decade
+3200.0,18.5,12.0,55.0,-2.1,14.5,2.1,-6.5,72.0,8.3,1.2,Middle East & North Africa,Lower middle income,IBRD,2010s
+850.0,14.2,22.5,110.0,-5.3,28.0,1.2,-9.8,55.0,18.7,0.4,Sub-Saharan Africa,Low income,IDA,2000s
+42000.0,22.1,3.2,15.0,2.8,5.1,8.5,1.2,95.0,1.8,3.1,Europe & Central Asia,High income,IBRD,2010s
+6500.0,16.8,8.5,45.0,1.2,9.3,4.5,-2.1,68.0,4.5,2.8,Latin America & Caribbean,Upper middle income,IBRD,2020s
+1200.0,12.0,18.0,85.0,-3.8,22.0,1.8,-7.2,48.0,12.1,0.8,South Asia,Lower middle income,IDA,2000s
+15000.0,20.5,5.5,30.0,3.5,7.2,6.0,0.5,88.0,2.9,2.2,East Asia & Pacific,Upper middle income,IBRD,2010s
+550.0,10.5,28.0,140.0,-8.2,35.0,0.8,-12.5,38.0,25.3,0.2,Sub-Saharan Africa,Low income,IDA,2010s
+9800.0,19.2,7.8,52.0,0.8,11.5,3.8,-3.5,74.0,6.2,1.9,Latin America & Caribbean,Upper middle income,IBRD,2020s
+25000.0,24.0,4.1,22.0,2.1,6.8,7.2,0.8,102.0,2.1,3.5,Europe & Central Asia,High income,IBRD,2010s
+2100.0,13.5,15.5,72.0,-1.5,18.0,2.5,-5.1,60.0,9.8,1.1,Middle East & North Africa,Lower middle income,IBRD,2000s

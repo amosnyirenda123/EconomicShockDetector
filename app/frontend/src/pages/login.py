@@ -1,7 +1,7 @@
 import streamlit as st
 from api.user_api import user_api
 from store.model_store import ModelStore
-from types.types import LoginReq
+from prediction_types import LoginReq
 
 def render_login():
     """Render login page"""

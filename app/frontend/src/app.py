@@ -1,5 +1,5 @@
 import streamlit as st
-from layout.layout import setup_page_config, render_layout
+from layout.layout import setup_page_config
 from components.sidebar import render_sidebar
 from components.header import render_header
 from components.footer import render_footer
@@ -14,6 +14,7 @@ from pages.profile import render_profile
 from pages.chat_history import render_chat_history
 from pages.single_prediction import render_single_prediction
 from pages.batch_prediction import render_batch_prediction
+from pages.developer import render_developers
 
 # Initialize session state
 init_session_state()
@@ -58,6 +59,9 @@ def main():
                 render_profile()
             elif current_page == 'chat_history':
                 render_chat_history()
+
+            elif current_page == 'developer':
+                render_developers()
             else:
                 render_home()
         

@@ -1,3 +1,5 @@
+import io
+
 import streamlit as st
 import pandas as pd
 from datetime import datetime
@@ -7,42 +9,41 @@ def render_batch_prediction():
     """Render batch prediction interface"""
     st.title("Batch Prediction")
     st.markdown("Upload a CSV file containing multiple observations for bulk prediction")
-    
+ 
     uploaded_file = st.file_uploader(
         "Choose a CSV file",
         type=['csv'],
         help="File must contain all required feature columns"
     )
-    
+ 
     if uploaded_file:
-        # Display file info
         st.info(f"File: {uploaded_file.name} | Size: {uploaded_file.size / 1024:.2f} KB")
-        
-        # Preview the data
+ 
         try:
-            df_preview = pd.read_csv(uploaded_file)
+            # Always read via BytesIO — Streamlit UploadedFile can behave like bytes
+            raw_bytes = uploaded_file.read()
+            df_preview = pd.read_csv(io.BytesIO(raw_bytes))
+ 
             st.subheader("Data Preview")
             st.dataframe(df_preview.head(), use_container_width=True)
             st.caption(f"Total rows: {len(df_preview)}")
-            
-            # Reset file pointer for actual prediction
-            uploaded_file.seek(0)
-            
+ 
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("Run Batch Prediction", use_container_width=True):
-                    process_batch_prediction(uploaded_file)
+                    # Pass raw_bytes directly — no second read needed
+                    process_batch_prediction(raw_bytes, uploaded_file.name)
             with col2:
                 if st.button("Clear", use_container_width=True):
                     st.rerun()
-                    
+ 
         except Exception as e:
             st.error(f"Error reading CSV file: {str(e)}")
 
-def process_batch_prediction(file):
+def process_batch_prediction(file_bytes: bytes, filename: str):
     """Process batch prediction"""
     with st.spinner("Processing batch predictions..."):
-        result_bytes = model_api.predict_batch(file)
+        result_bytes = model_api.predict_batch(file_bytes, filename)
         
         if result_bytes:
             # Load results
@@ -85,7 +86,7 @@ def process_batch_prediction(file):
             batch_result = {
                 'timestamp': datetime.now(),
                 'type': 'batch',
-                'filename': file.name,
+                'filename': filename,
                 'total_predictions': len(result_df),
                 'shock_count': shock_count
             }

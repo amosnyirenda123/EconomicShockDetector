@@ -1,7 +1,7 @@
 import requests
 import streamlit as st
 from typing import Optional, List, Dict, Any
-from types.types import RegisterReq, LoginReq, UserOut, ChatHistoryOut
+from prediction_types import RegisterReq, LoginReq, UserOut, ChatHistoryOut
 
 class UserAPI:
     def __init__(self, base_url: str):

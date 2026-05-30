@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import datetime, date
 from api.user_api import user_api
-from types.types import RegisterReq
+from prediction_types import RegisterReq
 
 def render_register():
     """Render registration page"""

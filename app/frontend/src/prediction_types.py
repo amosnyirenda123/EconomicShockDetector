@@ -1,7 +1,8 @@
 from typing import Optional, Literal
 from datetime import datetime
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, field_serializer
 from dataclasses import dataclass
+
 
 class PredictRequest(BaseModel):
     """Input features for GDP shock prediction"""
@@ -21,12 +22,14 @@ class PredictRequest(BaseModel):
     lending_type: str
     is_crisis_decade: str
 
+
 class PredictResponse(BaseModel):
     """Prediction response from model API"""
     prediction: Literal["choc", "normal"]
     probability: float
     threshold: float
     confidence: Literal["high", "medium", "low"]
+
 
 class UserOut(BaseModel):
     id: int
@@ -35,6 +38,11 @@ class UserOut(BaseModel):
     email: str
     date_of_birth: datetime
 
+    @field_serializer('date_of_birth')
+    def serialize_dt(self, dt: datetime, _info):
+        return dt.strftime('%Y-%m-%d')
+
+
 class RegisterReq(BaseModel):
     firstname: str
     lastname: str
@@ -42,9 +50,15 @@ class RegisterReq(BaseModel):
     password: str
     date_of_birth: datetime
 
+    @field_serializer('date_of_birth')
+    def serialize_dt(self, dt: datetime, _info):
+        return dt.strftime('%Y-%m-%d')
+
+
 class LoginReq(BaseModel):
     email: EmailStr
     password: str
+
 
 class ChatHistoryOut(BaseModel):
     id: int
@@ -54,6 +68,11 @@ class ChatHistoryOut(BaseModel):
     input_file_url: Optional[str]
     output_file_url: Optional[str]
     created_at: datetime
+
+    @field_serializer('created_at')  
+    def serialize_dt(self, dt: datetime, _info):
+        return dt.strftime('%Y-%m-%d %H:%M:%S')
+
 
 @dataclass
 class UserSession:

@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 from api.model_api import model_api
 from store.model_store import ModelStore
-from types.types import PredictRequest
+from prediction_types import PredictRequest
 from config.constants import REGIONS, INCOME_GROUPS, LENDING_TYPES, CRISIS_DECADES
 
 def render_single_prediction():
