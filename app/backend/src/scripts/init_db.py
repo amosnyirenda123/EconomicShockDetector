@@ -1,12 +1,13 @@
 """
-Run from anywhere:
-    python scripts/init_db.py
+Run from app/backend:
+    python src/scripts/init_db.py
 """
 import sys
 from pathlib import Path
 
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+# app/backend/src — where core/, models/, etc. live
+BACKEND_SRC = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(BACKEND_SRC))
 
 from core.sqlalchemy_connect import engine, Base
 from models.sqlalchemy_models import User, ChatHistory  # noqa: F401

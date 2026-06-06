@@ -20,29 +20,40 @@ services:
 
   backend:
     build:
-      context: ./app/backend
+      context: ./backend
       dockerfile: Dockerfile
     container_name: economic_shock_backend
     restart: unless-stopped
     environment:
       DATABASE_URL: mysql+mysqlconnector://root:${MYSQL_ROOT_PASSWORD:-admin2255}@db:3306/${MYSQL_DATABASE:-economic_shock_db}
-      MODEL_PATH: models/final_model.joblib
-      PREPROCESSOR_PATH: models/preprocessor.joblib
+      MODEL_PATH: /app/models/final_model.joblib
+      PREPROCESSOR_PATH: /app/models/preprocessor.joblib
       APP_VERSION: "1.0.0"
     ports:
       - "8000:8000"
     volumes:
-      # Mount model artefacts from host so you can swap models without rebuilding
-      - ./modeling/models:/app/models:ro
+      - ../modeling/models:/app/models:ro
     depends_on:
       db:
         condition: service_healthy
     networks:
       - app_network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')",
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   frontend:
     build:
-      context: ./app/frontend
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: economic_shock_frontend
     restart: unless-stopped
@@ -51,7 +62,8 @@ services:
     ports:
       - "8501:8501"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - app_network
 

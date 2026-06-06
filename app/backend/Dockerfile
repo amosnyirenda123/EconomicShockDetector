@@ -20,11 +20,11 @@ COPY --from=builder /install /usr/local
 # Copy application source
 COPY src/ ./src/
 
-# Copy model artefacts
-COPY models/ ./models/
-
 # Copy DB init script
-COPY scripts/init_db.py ./scripts/init_db.py
+COPY src/scripts/init_db.py ./src/scripts/init_db.py
+
+# Model artefacts are mounted at runtime via docker-compose (../modeling/models → /app/models)
+RUN mkdir -p /app/models
 
 # Non-root user for security
 RUN adduser --disabled-password --gecos "" appuser && \
@@ -33,5 +33,5 @@ USER appuser
 
 EXPOSE 8000
 
-# Run DB init then start the API
-CMD ["sh", "-c", "python scripts/init_db.py && uvicorn src.main:app --host 0.0.0.0 --port 8000"]
+# Run DB init then start the API (--app-dir src puts core/, api/, etc. on PYTHONPATH)
+CMD ["sh", "-c", "python src/scripts/init_db.py && uvicorn main:app --app-dir src --host 0.0.0.0 --port 8000"]

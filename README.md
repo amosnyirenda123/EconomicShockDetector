@@ -25,6 +25,7 @@
 - [Installation](#installation)
   - [With Docker (Recommended)](#with-docker-recommended)
   - [Without Docker](#without-docker)
+- [Testing](#testing)
 - [API Documentation](#api-documentation)
 - [Known Limitations](#known-limitations)
 - [License](#license)
@@ -82,15 +83,21 @@ economic-shock-detector/
 │
 ├── modeling/
 │   ├── data/                           # Raw and processed datasets
-│   ├── models/                         # Saved model and preprocessor artefacts
-│   ├── notebooks/                      # EDA, preprocessing, modeling, evaluation
-│   ├── src/                            # Reusable modeling helpers (GroupMedianImputer…)
+│   ├── models/                         # final_model.joblib, preprocessor.joblib
+│   ├── notebooks/                      # 01–06 notebooks (EDA → evaluation)
+│   ├── scripts/validate_data.py        # Data-quality checks (IQR, inconsistencies)
+│   ├── src/                            # preprocessing, data_validation helpers
 │   └── preprocessing_decisions.md
 │
-├── scripts/                            # VM setup and maintenance scripts
-│   ├── setup_vm.sh                     # Ubuntu 22.04
-│   └── setup_vm.ps1                    # Windows Server / Windows 10-11
+├── tests/                              # pytest suite (API, validation, model)
+├── preprocessing_decisions.md          # Phase 2 decision log (copy at root)
+├── requirements.txt                    # Pinned deps (full project)
+├── LICENSE
+├── scripts/                            # VM setup scripts
+│   ├── setup_vm.sh
+│   └── setup_vm.ps1
 │
+├── examples/batch_test.csv             # Sample CSV for batch prediction
 ├── .gitignore
 └── README.md
 ```
@@ -98,6 +105,17 @@ economic-shock-detector/
 ---
 
 ## Installation
+
+**Python version:** use **3.11** or **3.12**. Python 3.14+ (including 3.15) has no pre-built wheels for `scikit-learn`/`scipy` yet — `pip install` will try to compile from source and fail without a Fortran compiler.
+
+On Windows, recreate the venv with 3.11 (you already have it installed):
+
+```powershell
+cd c:\Users\PE\Documents\python\EconomicShockDetector
+.\scripts\setup_venv.ps1
+.\.venv\Scripts\Activate.ps1
+pip install -r app\backend\requirements.txt
+```
 
 ### With Docker (Recommended)
 
@@ -112,7 +130,8 @@ cd economic-shock-detector
 cp app/backend/.env.example app/backend/.env
 # Edit .env with your DB password and model paths
 
-# 3. Build and start all services
+# 3. Build and start all services (run from app/)
+cd app
 docker compose up --build -d
 
 # 4. Initialise the database (first run only)
@@ -126,7 +145,91 @@ docker compose exec backend python scripts/init_db.py
 | Swagger UI  | http://localhost:8000/docs  |
 | ReDoc       | http://localhost:8000/redoc |
 
-To stop: `docker compose down`
+To stop: `docker compose down` (from the `app/` directory)
+
+---
+
+## Testing
+
+### 1. Data quality checks (Phase 2)
+
+Validates missing values, logical inconsistencies, and outliers (IQR + Z-score):
+
+```bash
+pip install pandas numpy
+python modeling/scripts/validate_data.py
+```
+
+### 2. Automated tests (pytest)
+
+From the repository root, with backend dependencies installed:
+
+```bash
+pip install -r app/backend/requirements.txt
+pytest tests/ -v
+```
+
+Tests cover:
+
+- `tests/test_data_validation.py` — IQR, Z-score, inconsistency rules
+- `tests/test_api.py` — `/health`, `/predict` (requires `modeling/models/*.joblib`)
+- `tests/test_model_service.py` — direct prediction via `ModelService`
+
+### 3. API manual test (curl)
+
+With the backend running on port 8000:
+
+```bash
+curl http://localhost:8000/health
+curl http://localhost:8000/model/info
+curl -X POST "http://localhost:8000/predict" -H "Content-Type: application/json" -d @- <<EOF
+{
+  "gdp_per_capita": 3200.0,
+  "gov_expenditure": 18.5,
+  "debt_service_pct": 12.0,
+  "external_debt_pct": 55.0,
+  "gni_per_capita_growth": -2.1,
+  "unemployment": 14.5,
+  "fx_reserves_months": 2.1,
+  "current_account_pct": -6.5,
+  "trade_openness": 72.0,
+  "inflation": 8.3,
+  "fdi_inflows": 1.2,
+  "region": "Middle East & North Africa",
+  "income_group": "Lower middle income",
+  "lending_type": "IBRD",
+  "is_crisis_decade": "2010s"
+}
+EOF
+```
+
+Batch prediction:
+
+```bash
+curl -X POST "http://localhost:8000/predict/batch" \
+  -F "file=@examples/batch_test.csv" \
+  -o predictions.csv
+```
+
+### 4. Streamlit UI
+
+```bash
+cd app/frontend
+streamlit run src/app.py
+```
+
+Open http://localhost:8501 — use **Single Prediction** or upload `examples/batch_test.csv` in **Batch Prediction**.
+
+### 5. Docker end-to-end
+
+```bash
+cd app
+docker compose up --build -d
+docker compose ps          # backend health should be "healthy"
+curl http://localhost:8000/health
+```
+
+Open http://localhost:8501 for the UI.
 
 ---
 
@@ -146,7 +249,8 @@ cp .env.example .env
 # Edit .env with your database URL and model paths
 
 python src/scripts/init_db.py
-uvicorn src.main:app --reload --port 8000
+uvicorn main:app --app-dir src --reload --port 8000
+# Or: .\run.ps1
 ```
 
 #### Frontend
