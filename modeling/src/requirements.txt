@@ -1,0 +1,10 @@
+pandas
+numpy
+wbgapi
+requests
+matplotlib
+scikit-learn>=1.3
+imbalanced-learn>=0.12
+xgboost>=2.0
+joblib
+seaborn

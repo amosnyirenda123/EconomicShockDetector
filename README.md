@@ -1,102 +1,241 @@
+# Economic Shock Detector
+
+> A supervised machine learning system that predicts whether a country-year experienced a sudden GDP economic shock, built on World Bank public indicators.
+
+![Python](https://img.shields.io/badge/Python-3.11-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.111-green)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.35-red)
+![Docker](https://img.shields.io/badge/Docker-Compose-blue)
+![License](https://img.shields.io/badge/License-MIT-yellow)
+
+---
+
+## Screenshots
+
+| Prediction Interface                                            | API Response                                                              |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| _[Screenshot: country selection and GDP shock prediction form]_ | _[Screenshot: JSON response with prediction, probability and confidence]_ |
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Project Structure](#project-structure)
+- [Installation](#installation)
+  - [With Docker (Recommended)](#with-docker-recommended)
+  - [Without Docker](#without-docker)
+- [API Documentation](#api-documentation)
+- [Known Limitations](#known-limitations)
+- [License](#license)
+
+---
+
+## Overview
+
+The Economic Shock Detector models `gdp_shock` as a binary classification problem. Given a set of macroeconomic indicators for a country-year observation, the system predicts whether that country experienced a sudden economic shock and returns a probability score, a confidence label, and the decision threshold applied.
+
+The full pipeline covers:
+
+- **Data collection** — World Bank Indicators API
+- **Preprocessing** — leakage-safe imputation, encoding, scaling, train/val/test splits
+- **Modeling** — XGBoost with sampling strategies and threshold optimization
+- **Serving** — FastAPI REST backend + Streamlit frontend, containerised with Docker
+
+---
+
 ## Project Structure
 
-```
-EconomicShockDetector/
+```text
+economic-shock-detector/
 │
-├── src/
-│   ├── data_collection.py      ← fetches raw data from World Bank API
-│   ├── build-dataset.py          ← cleans data and creates the final dataset
-│   └── requirements.txt        ← dependencies of the project
+├── app/
+│   ├── backend/                        # FastAPI backend service
+│   │   ├── src/
+│   │   │   ├── api/                    # Route definitions
+│   │   │   ├── core/                   # Config and DB connection
+│   │   │   ├── dependencies/           # FastAPI Depends factories
+│   │   │   ├── models/                 # SQLAlchemy ORM models
+│   │   │   ├── repository/             # Data access layer
+│   │   │   ├── schemas/                # Pydantic request/response schemas
+│   │   │   ├── scripts/                # init_db and utility scripts
+│   │   │   ├── service/                # Business logic (ModelService, UserService)
+│   │   │   └── main.py                 # FastAPI app entry point
+│   │   ├── Dockerfile
+│   │   ├── requirements.txt
+│   │   ├── .env.example
+│   │   └── .dockerignore
+│   │
+│   ├── frontend/                       # Streamlit frontend
+│   │   ├── src/
+│   │   │   ├── api/                    # HTTP client for backend
+│   │   │   ├── components/             # Reusable UI components
+│   │   │   ├── pages/                  # Multi-page app (home, predict, batch, developers)
+│   │   │   ├── store/                  # Session state management
+│   │   │   ├── app.py                  # Streamlit entry point
+│   │   │   └── prediction_types.py     # Shared Pydantic types
+│   │   ├── Dockerfile
+│   │   ├── requirements.txt
+│   │   └── .dockerignore
+│   │
+│   └── docker-compose.yml
 │
-├── data/
-│   ├── gdp_shock_dataset_raw.csv         ← raw output from data_collection.py
-│   ├── dataset.csv                      ← final clean labeled dataset
-│   └── sample.csv                       ← first 100 rows for quick review
+├── modeling/
+│   ├── data/                           # Raw and processed datasets
+│   ├── models/                         # Saved model and preprocessor artefacts
+│   ├── notebooks/                      # EDA, preprocessing, modeling, evaluation
+│   ├── src/                            # Reusable modeling helpers (GroupMedianImputer…)
+│   └── preprocessing_decisions.md
 │
-├── notebooks/
-│   └── 01_discovery.ipynb        ← EDA on dataset.csv (Person C)
+├── scripts/                            # VM setup and maintenance scripts
+│   ├── setup_vm.sh                     # Ubuntu 22.04
+│   └── setup_vm.ps1                    # Windows Server / Windows 10-11
 │
-├── DATASET.md                    ← dataset documentation (Person C)
-├── cadrage.md                    ← project framing (business objectives, metrics)
+├── .gitignore
 └── README.md
 ```
 
 ---
 
-## How to Run
+## Installation
 
-### Step 1 — Install dependencies
-```bash
-pip install -r src/requirements.txt
-```
-(From the **project root**. If your shell is already inside `src/`, use `pip install -r requirements.txt` instead.)
+### With Docker (Recommended)
 
-### Step 2 — Collect raw data from the World Bank API
-```bash
-cd src
-python data_collection.py
-```
-This makes ~14 API calls to the World Bank.  
-It takes about 5 to 15 minutes depending on your connection.  
-Output: `data/gdp_shock_dataset_raw.csv`
+**Prerequisites:** Docker Desktop (Windows/macOS) or Docker Engine + Compose (Linux).
 
-### Step 3 — Build the final clean dataset
 ```bash
-python build-dataset.py
+# 1. Clone the repository
+git clone https://github.com/yourusername/economic-shock-detector.git
+cd economic-shock-detector
+
+# 2. Create your environment file
+cp app/backend/.env.example app/backend/.env
+# Edit .env with your DB password and model paths
+
+# 3. Build and start all services
+docker compose up --build -d
+
+# 4. Initialise the database (first run only)
+docker compose exec backend python scripts/init_db.py
 ```
-This cleans the raw data, applies the shock labeling rule, and saves the final files.  
-Output: `data/dataset.csv` and `data/sample.csv`
+
+| Service     | URL                         |
+| ----------- | --------------------------- |
+| Frontend    | http://localhost:8501       |
+| Backend API | http://localhost:8000       |
+| Swagger UI  | http://localhost:8000/docs  |
+| ReDoc       | http://localhost:8000/redoc |
+
+To stop: `docker compose down`
 
 ---
 
-## The Data
+### Without Docker
 
-### Where it comes from
-World Bank Indicators API — `https://api.worldbank.org/v2/`  
-No API key needed. Completely free and public.  
-Data covers **~200 countries** from **1960 to 2022**.
+#### Backend
 
-### What each row looks like
-One row = one country in one year.
+```bash
+cd app/backend
+python -m venv venv
+venv\Scripts\activate        # Windows
+# source venv/bin/activate   # macOS/Linux
 
-| Column | Type | Description |
-|---|---|---|
-| `country` | text | ISO 3-letter country code (e.g. MAR, USA) |
-| `country_name` | text | Full country name (e.g. Morocco, United States) |
-| `year` | number | Year of observation |
-| `gdp_growth` | number | Annual GDP growth % |
-| `inflation` | number | Consumer price inflation % |
-| `unemployment` | number | Unemployment % of labour force |
-| `gdp_per_capita` | number | GDP per capita in constant USD |
-| `external_debt_pct` | number | External debt as % of GNI |
-| `trade_openness` | number | Trade as % of GDP |
-| `fdi_inflows` | number | Foreign direct investment as % of GDP |
-| `gov_expenditure` | number | Government expenditure as % of GDP |
-| `current_account_pct` | number | Current account balance as % of GDP |
-| `fx_reserves_months` | number | Foreign exchange reserves in months of imports |
-| `debt_service_pct` | number | Debt service as % of exports |
-| `govt_debt_pct_gdp` | number | Government debt as % of GDP |
-| `domestic_credit_pct` | number | Domestic credit as % of GDP |
-| `gni_per_capita_growth` | number | GNI per capita growth % |
-| `region` | category | World region (e.g. Sub-Saharan Africa) |
-| `income_group` | category | World Bank income classification |
-| `lending_type` | category | World Bank lending classification |
-| `is_crisis_decade` | category | Decade bucket (1980s, 1990s, 2000s...) |
-| `gdp_growth_lag1` | number | GDP growth of the previous year |
-| `gdp_growth_delta` | number | Change in GDP growth vs previous year (in percentage points) |
-| `gdp_shock` | **0 or 1** | **Target variable — what we are predicting** |
+pip install -r requirements.txt
+
+cp .env.example .env
+# Edit .env with your database URL and model paths
+
+python src/scripts/init_db.py
+uvicorn src.main:app --reload --port 8000
+```
+
+#### Frontend
+
+```bash
+cd app/frontend
+python -m venv venv
+venv\Scripts\activate        # Windows
+# source venv/bin/activate   # macOS/Linux
+
+pip install -r requirements.txt
+streamlit run src/app.py
+```
+
+#### VM Setup (fresh machine)
+
+```powershell
+# Windows — run as Administrator
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+.\scripts\setup_vm.ps1
+```
+
+```bash
+# Ubuntu 22.04
+chmod +x scripts/setup_vm.sh && ./scripts/setup_vm.sh
+```
 
 ---
 
-## Cleaning Decisions
+## API Documentation
 
-During `build-dataset.py` we drop rows in this order and for these reasons:
+Interactive documentation is auto-generated by FastAPI.
 
-| What we drop | Why |
-|---|---|
-| Rows where `region` is missing | These are World Bank aggregate entries (e.g. "Arab World"), not real countries |
-| Rows where `gdp_growth` is missing | Cannot apply the shock rule without GDP data |
-| Rows where `gdp_growth_lag1` is missing | Cannot compute the year-over-year drop without the previous year's value — typically the first year of each country in the dataset |
+| Endpoint              | Method | Description                                   |
+| --------------------- | ------ | --------------------------------------------- |
+| `/`                   | GET    | API overview and documentation links          |
+| `/health`             | GET    | Health check — confirms model is loaded       |
+| `/model/info`         | GET    | Model type, threshold, training date, metrics |
+| `/predict`            | POST   | Single prediction from JSON features          |
+| `/predict/batch`      | POST   | Batch prediction from uploaded CSV file       |
+| `/users/register`     | POST   | Register a new user                           |
+| `/users/login`        | POST   | Login and retrieve user info                  |
+| `/users/{id}/history` | GET    | Retrieve prediction history for a user        |
 
-We do **not** drop rows just because other indicators (inflation, unemployment, etc.) are missing. Those will be handled during preprocessing in Phase 2.
+**Example — single prediction:**
 
+```bash
+curl -X POST "http://localhost:8000/predict" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gdp_per_capita": 3200.0,
+    "unemployment": 14.5,
+    "inflation": 8.3,
+    "region": "Middle East & North Africa",
+    "income_group": "Lower middle income",
+    "lending_type": "IBRD",
+    "is_crisis_decade": "2010s"
+  }'
+```
+
+```json
+{
+  "prediction": "choc",
+  "probability": 0.78,
+  "threshold": 0.42,
+  "confidence": "high"
+}
+```
+
+---
+
+## Known Limitations
+
+| Limitation                  | Detail                                                                                      |
+| --------------------------- | ------------------------------------------------------------------------------------------- |
+| **Data gaps**               | World Bank indicators have missing values for developing nations and earlier years          |
+| **Temporal lag**            | Economic indicators are often revised months after initial publication                      |
+| **Definition variability**  | The binary shock threshold is standardised and may not capture all country-specific nuances |
+| **Geographic bias**         | Performance is stronger for OECD countries due to higher data quality and density           |
+| **Unprecedented events**    | The model cannot predict shocks with no historical precedent (e.g. COVID-19)                |
+| **Correlation ≠ causation** | The model identifies associated patterns, not causal relationships                          |
+| **Retraining frequency**    | Quarterly retraining is recommended as new World Bank data is published                     |
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+**Project status:** Phase 4 complete — modeling, API, frontend, and containerisation done.

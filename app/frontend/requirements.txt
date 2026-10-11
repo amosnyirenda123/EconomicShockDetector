@@ -1,0 +1,16 @@
+# UI Framework
+streamlit==1.58.0
+
+
+# Visualization
+plotly==6.7.0
+
+# API Communication
+requests==2.34.2
+
+# Environment Variables
+python-dotenv==1.2.2
+
+# Data Validation
+pydantic==2.13.4
+pydantic-settings==2.14.1
