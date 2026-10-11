@@ -1,0 +1,30 @@
+[project]
+name = "economicshockdetector"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "amosnyirenda123", email = "nyirendaamos1@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi>=0.143.0",
+    "imbalanced-learn>=0.14.2",
+    "ipykernel>=7.4.0",
+    "joblib>=1.6.0",
+    "matplotlib>=3.11.2",
+    "mlflow>=3.17.0",
+    "numpy>=2.5.4",
+    "pandas>=3.0.6",
+    "scikit-learn>=1.9.1",
+    "seaborn>=0.13.2",
+    "streamlit>=1.65.0",
+    "xgboost>=3.4.1",
+]
+
+[project.scripts]
+economicshockdetector = "economicshockdetector:main"
+
+[build-system]
+requires = ["uv_build>=0.12.21,<0.13.0"]
+build-backend = "uv_build"

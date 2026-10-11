@@ -1,0 +1,29 @@
+artifact_path: /home/amosnyirenda/projects/EconomicShockDetector/mlruns/1/models/m-2eaf1e0f2cd742b7aef583e061cbb4f3/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.14.6
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.9.1
+    skops_trusted_types: null
+is_signature_from_type_hint: false
+mlflow_version: 3.17.0
+model_id: m-2eaf1e0f2cd742b7aef583e061cbb4f3
+model_size_bytes: 11097
+model_uuid: m-2eaf1e0f2cd742b7aef583e061cbb4f3
+prompts: null
+run_id: 80a5efae14b94fbd9af33f9602f2097a
+signature:
+  inputs: '[{"type": "tensor", "tensor-spec": {"dtype": "float64", "shape": [-1, 29]}}]'
+  outputs: '[{"type": "tensor", "tensor-spec": {"dtype": "int64", "shape": [-1]}}]'
+  params: null
+type_hint_from_example: false
+utc_time_created: '2026-10-11 12:17:48.162872'
