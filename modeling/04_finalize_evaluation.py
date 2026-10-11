@@ -44,7 +44,7 @@ def find_optimal_threshold(y_true, y_proba, costs=range(1, 100)):
 
 def plot_and_log_artifacts(y_true, y_proba, threshold):
     """Generates and saves plots for evaluation."""
-    # Plot 1: Confusion Matrix
+    
     y_pred = (y_proba >= threshold).astype(int)
     cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
     plt.figure(figsize=(6, 5))
@@ -60,7 +60,7 @@ def plot_and_log_artifacts(y_true, y_proba, threshold):
     plt.close()
     mlflow.log_artifact(cm_path)
 
-    # Plot 2: ROC and PR Curves
+   
     fig, axes = plt.subplots(1, 2, figsize=(13, 5))
     fpr, tpr, _ = roc_curve(y_true, y_proba)
     axes[0].plot(fpr, tpr, color='steelblue', linewidth=2, label=f'ROC-AUC = {roc_auc_score(y_true, y_proba):.3f}')
@@ -88,19 +88,19 @@ def main():
     FEATURES = [c for c in test_df.columns if c != TARGET]
     X_test, y_test = test_df[FEATURES].values, test_df[TARGET].values
 
-    # Load the tuned model
+    
     pipeline = joblib.load(MODELS_DIR / 'tuned_model.joblib')
     with open(MODELS_DIR / 'tuning_meta.json') as f:
         tuning_meta = json.load(f)
 
-    # Get probabilities
+    
     y_test_proba = pipeline.predict_proba(X_test)[:, 1]
 
-    # Find the optimal business threshold
+   
     optimal_threshold, min_cost = find_optimal_threshold(y_test, y_test_proba)
     print(f"Optimal business threshold found: {optimal_threshold:.2f} (Cost: {min_cost})")
 
-    # Evaluate final metrics
+    
     y_pred_optimal = (y_test_proba >= optimal_threshold).astype(int)
     final_metrics = {
         "recall": float(recall_score(y_test, y_pred_optimal)),
@@ -113,15 +113,15 @@ def main():
     }
     print("Final Test Metrics:", final_metrics)
 
-    # --- Log and Register the Final Model (single active run) ---
+    
     with mlflow.start_run(run_name="Final_Registered_Model") as run:
         mlflow.log_param("tuned_model_run_id", tuning_meta['mlflow_run_id'])
         mlflow.log_metrics(final_metrics)
 
-        # Plots are generated AND logged inside the run
+        
         plot_and_log_artifacts(y_test, y_test_proba, optimal_threshold)
 
-        # Save the final payload locally and log it
+        
         final_payload = {
             'model': pipeline,
             'optimal_threshold': optimal_threshold,
@@ -133,7 +133,7 @@ def main():
         joblib.dump(final_payload, final_model_path)
         mlflow.log_artifact(final_model_path)
 
-        # Log the model with cloudpickle and register it
+        
         signature = mlflow.models.infer_signature(X_test, y_test_proba)
         mlflow.sklearn.log_model(
             sk_model=pipeline,

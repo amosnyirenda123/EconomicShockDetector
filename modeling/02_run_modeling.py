@@ -13,7 +13,7 @@ from imblearn.pipeline import Pipeline as ImbPipeline
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
 
-# --- Configuration ---
+
 PROCESSED_DATA_DIR = Path(__file__).parent.parent / 'data' / 'processed'
 MLFLOW_TRACKING_URI = f"sqlite:///{Path(__file__).parent.parent / 'mlflow.db'}"
 EXPERIMENT_NAME = "WorldBank_GDP_Shock_Modeling"
@@ -21,22 +21,22 @@ TARGET = 'gdp_shock'
 RANDOM_STATE = 42
 
 SKOPS_TRUSTED_TYPES = [
-    # imblearn components
+  
     "imblearn.pipeline.Pipeline",
     "imblearn.over_sampling._smote.base.SMOTE",
     "imblearn.under_sampling._prototype_selection._random_under_sampler.RandomUnderSampler",
     
-    # sklearn tree-based models
+
     "sklearn.tree._tree.Tree",
     
-    # XGBoost
+
     "xgboost.core.Booster",
     "xgboost.sklearn.XGBClassifier",
     
-    # MLP (likely needed)
+   
     "sklearn.neural_network._multilayer_perceptron.MLPClassifier",
     
-    # LogisticRegression solver internals (saga/lbfgs may reference these)
+    
     "sklearn.linear_model._sag._sag_fit",
     "sklearn.linear_model._sag_fast",
 ]
@@ -92,7 +92,7 @@ def main():
             print(f"  Running: {run_name}")
             
             with mlflow.start_run(run_name=run_name) as run:
-                # Log model and strategy names as parameters
+                
                 mlflow.log_param("model_name", model_name)
                 mlflow.log_param("strategy_name", strategy_name)
                 if model_name == 'XGBoost':
@@ -105,7 +105,7 @@ def main():
 
                 cv_scores = cross_validate(pipeline, X_train, y_train, cv=cv, scoring=scoring, n_jobs=-1, error_score='raise')
 
-                # Log mean and std of metrics
+                
                 metrics = {}
                 for metric in ['recall', 'precision', 'f1', 'pr_auc']:
                     mean_score = cv_scores[f'test_{metric}'].mean()
@@ -115,9 +115,7 @@ def main():
                     mlflow.log_metric(f"{metric}_mean", mean_score)
                     mlflow.log_metric(f"{metric}_std", std_score)
 
-                # Log the model signature and the model itself
-                # Note: We are logging the model trained on a single fold for now as an example.
-                # In the tuning stage, we will log the final refitted model.
+                
                 pipeline.fit(X_train, y_train)
                 signature = mlflow.models.infer_signature(X_train, pipeline.predict(X_train))
                 mlflow.sklearn.log_model(

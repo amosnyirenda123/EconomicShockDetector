@@ -15,7 +15,7 @@ from imblearn.pipeline import Pipeline as ImbPipeline
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
 
-# --- Configuration ---
+
 PROCESSED_DATA_DIR = Path(__file__).parent.parent / 'data' / 'processed'
 MODELS_DIR = Path(__file__).parent.parent / 'models'
 MLFLOW_TRACKING_URI = f"sqlite:///{Path(__file__).parent.parent / 'mlflow.db'}"
@@ -59,7 +59,7 @@ def main():
     X_train, y_train = train_df[FEATURES].values, train_df[TARGET].values
     X_val, y_val = val_df[FEATURES].values, val_df[TARGET].values
 
-    # Load results from previous step to pick the best model
+   
     modeling_results = pd.read_csv(PROCESSED_DATA_DIR / 'modeling_results.csv')
     best_row = modeling_results.sort_values(['recall_mean', 'f1_mean'], ascending=False).iloc[0]
     best_model_name, best_strategy_name = best_row['Modèle'], best_row['Stratégie']
@@ -67,7 +67,7 @@ def main():
 
     scale_pos_weight = (y_train == 0).sum() / (y_train == 1).sum()
 
-    # Define the model and parameter grid
+   
     param_grids = {
         'XGBoost': {
             'model__n_estimators': [300, 500, 700],
@@ -115,7 +115,7 @@ def main():
         
         print(f"Best CV Recall: {search.best_score_:.4f}")
 
-        # Log the best model as a child run with the 'best' tag
+       
         with mlflow.start_run(run_name="BestModel", nested=True) as best_run:
             best_estimator = search.best_estimator_
             
@@ -128,7 +128,7 @@ def main():
             signature = mlflow.models.infer_signature(X_train, best_estimator.predict(X_train))
             mlflow.sklearn.log_model(best_estimator, "model", signature=signature, serialization_format="cloudpickle")
 
-            # Save locally as well (as in your notebook)
+         
             joblib.dump(best_estimator, MODELS_DIR / 'tuned_model.joblib')
             
             tuning_meta = {

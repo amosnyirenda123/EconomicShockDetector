@@ -4,7 +4,7 @@ from pathlib import Path
 from sklearn.model_selection import train_test_split
 import sys
 
-# Add src to path to import the custom imputer
+
 sys.path.append(str(Path(__file__).parent))
 from src.preprocessing import GroupMedianImputer
 from sklearn.compose import ColumnTransformer
@@ -13,7 +13,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, RobustScaler
 import joblib
 
-# --- Configuration ---
+
 DATA_PATH = Path(__file__).parent.parent / 'data' / 'raw' / 'dataset.csv'
 PROCESSED_DATA_DIR = Path(__file__).parent.parent / 'data' / 'processed'
 MODELS_DIR = Path(__file__).parent.parent / 'models'
@@ -22,18 +22,18 @@ RANDOM_STATE = 42
 
 def create_preprocessing_pipeline(df_preprocessed):
     """Defines the full preprocessing pipeline based on decisions from the notebook."""
-    # These lists come directly from your 03_preprocessing notebook
+  
     nominal_categorical_cols = ['region', 'income_group', 'lending_type']
     ordinal_categorical_cols = ['is_crisis_decade']
     binary_passthrough_cols = ['high_external_debt']
     log_passthrough_cols = ['gdp_per_capita_log']
     passthrough_cols = binary_passthrough_cols + log_passthrough_cols
 
-    # Identify numeric columns dynamically, excluding identifiers and target
+  
     excluded_cols = ['gdp_per_capita', 'gdp_per_capita_log'] + nominal_categorical_cols + ordinal_categorical_cols + passthrough_cols
     numeric_cols = [col for col in df_preprocessed.select_dtypes(include=['float64']).columns if col not in excluded_cols]
     
-    # The imputer needs the group column to be present in its input
+    
     numeric_imputer_input_cols = numeric_cols + ['income_group']
 
     numeric_pipeline = Pipeline(steps=[
@@ -67,26 +67,25 @@ def main():
     df = pd.read_csv(DATA_PATH)
     print(f"Raw data shape: {df.shape}")
 
-    # 1. Drop columns with too many missing values
+   
     high_missing_cols = ['domestic_credit_pct', 'govt_debt_pct_gdp']
     df_preprocessed = df.drop(columns=high_missing_cols)
     print(f"Shape after dropping high-missing columns: {df_preprocessed.shape}")
 
-    # 2. Drop rows where gdp_per_capita is missing
+
     df_preprocessed = df_preprocessed.dropna(subset=['gdp_per_capita']).copy()
     print(f"Shape after dropping gdp_per_capita NaN rows: {df_preprocessed.shape}")
 
-    # 3. Feature Engineering
     df_preprocessed['gdp_per_capita_log'] = np.log(df_preprocessed['gdp_per_capita'])
     df_preprocessed['high_external_debt'] = (df_preprocessed['external_debt_pct'] > 80).astype(int)
     print("Added engineered features: gdp_per_capita_log, high_external_debt")
 
-    # 4. Drop leakage columns
+  
     leakage_cols = ['gdp_growth', 'gdp_growth_lag1', 'gdp_growth_delta']
     df_preprocessed = df_preprocessed.drop(columns=leakage_cols)
     print(f"Shape after dropping leakage columns: {df_preprocessed.shape}")
 
-    # 5. Split data
+  
     identifier_cols = ['country', 'country_name', 'year']
     X = df_preprocessed.drop(columns=identifier_cols + [TARGET])
     y = df_preprocessed[TARGET].copy()
@@ -95,13 +94,12 @@ def main():
     X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.50, stratify=y_temp, random_state=RANDOM_STATE)
     print(f"Splits created: Train={X_train.shape}, Val={X_val.shape}, Test={X_test.shape}")
 
-    # 6. Build and fit the preprocessing pipeline on the training data
+
     preprocessor = create_preprocessing_pipeline(df_preprocessed)
     X_train_processed = preprocessor.fit_transform(X_train)
     X_val_processed = preprocessor.transform(X_val)
     X_test_processed = preprocessor.transform(X_test)
-    
-    # 7. Save processed data and the preprocessor
+
     PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
